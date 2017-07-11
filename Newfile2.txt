@@ -1,0 +1,199 @@
+### Pkt
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purple8da43fb">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"percobaan 5">>}]}]}
+### LServer
+<<"localhost">>
+### LUser
+<<"bob">>
+### LHost
+<<"localhost">>
+### Type
+chat
+### Peer
+{jid,<<"alice">>,<<"localhost">>,<<>>,<<"alice">>,<<"localhost">>,<<>>}
+### Nick
+<<>>
+### Dir
+send
+####################################################################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purpleaccdb373">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"percobaan 10">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<>>,<<"alice">>,<<"localhost">>,<<>>}
+<<>>
+send
+
+<<"bob">>
+1499657698679227
+<<"alice@localhost">>
+<<"alice@localhost">>
+<<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleaccdb373'><active xmlns='http://jabber.org/protocol/chatstates'/><body>percobaan 10</body></message>">>
+<<"percobaan 10">>
+<<"chat">>
+<<>>
+
+{sql_query,<<"Q68740753">>,#Fun<mod_mam_sql.6.92964282>,
+           #Fun<mod_mam_sql.7.92964282>,#Fun<mod_mam_sql.8.92964282>,
+           {mod_mam_sql,103}}
+
+####################################################
+
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"alice@localhost/5280">>},
+        {<<"to">>,<<"bob@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purple4a7b0b5d">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"test haha">>}]}]}
+<<"localhost">>
+<<"alice">>
+<<"localhost">>
+chat
+{jid,<<"bob">>,<<"localhost">>,<<>>,<<"bob">>,<<"localhost">>,<<>>}
+<<>>
+send
+
+<<"alice">>
+1499658175229687
+<<"bob@localhost">>
+<<"bob@localhost">>
+<<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple4a7b0b5d'><active xmlns='http://jabber.org/protocol/chatstates'/><body>test haha</body></message>">>
+<<"test haha">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+
+####################################################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"alice@localhost/5280">>},
+        {<<"to">>,<<"bob@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purple4a7b0b5d">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"test haha">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<"5280">>,<<"alice">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+recv
+
+<<"bob">>
+1499658175389166
+<<"alice@localhost/5280">>
+<<"alice@localhost">>
+<<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple4a7b0b5d'><active xmlns='http://jabber.org/protocol/chatstates'/><body>test haha</body></message>">>
+<<"test haha">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+
+####################################################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purpleac91cc39">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"mencoba lagi">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<>>,<<"alice">>,<<"localhost">>,<<>>}
+<<>>
+send
+
+<<"bob">>
+1499658701740485
+<<"alice@localhost">>
+<<"alice@localhost">>
+<<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleac91cc39'><active xmlns='http://jabber.org/protocol/chatstates'/><body>mencoba lagi</body></message>">>
+<<"mencoba lagi">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+####################################################
+1
+####################################################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purpleac91cc39">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"mencoba lagi">>}]}]}
+<<"localhost">>
+<<"alice">>
+<<"localhost">>
+chat
+{jid,<<"bob">>,<<"localhost">>,<<"5280">>,<<"bob">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+recv
+
+<<"alice">>
+1499658701866207
+<<"bob@localhost/5280">>
+<<"bob@localhost">>
+<<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleac91cc39'><active xmlns='http://jabber.org/protocol/chatstates'/><body>mencoba lagi</body></message>">>
+<<"mencoba lagi">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+####################################################
+1
+####################################################
+<<"alice">>
+<<"localhost">>
+#######################get_prefs#############################
+<<"alice">>
+<<"localhost">>
+{ok,{archive_prefs,{<<"alice">>,<<"localhost">>},
+                   roster,
+                   [{<<"bob">>,<<"locahost">>,<<"res1">>}],
+                   [{<<"bob">>,<<"localhost">>,<<>>}]}}
+#######################get_prefs#############################
+<<"bob">>
+<<"bob">>
+<<"localhost">>
+roster
+[{<<"alice">>,<<"localhost">>,<<>>}]
+[{<<"alice">>,<<"localhost">>,<<>>},{<<"alice">>,<<"localhost">>,<<"res2">>}]
+<<"localhost">>
+#####################write_prefs###############################
+<<"roster">>
+<<"[{<<\"alice\">>,<<\"localhost\">>,<<>>},{<<\"alice\">>,<<\"localhost\">>,<<\"res2\">>}]">>
+<<"[{<<\"alice\">>,<<\"localhost\">>,<<>>}]">>
+#####################write_prefs###############################

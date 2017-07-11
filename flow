@@ -1,0 +1,652 @@
+sql_query -> sql_call -> gen_fsm:send_event(event : sql_cmd) -> state accept event. if connection established -> run_sql_query -> outer_op -> outer_transaction (optional) -> sq_query_internal. if mysql -> generic_sql_query
+
+NetworkTopologyStrategy is used when you have more than two data centers.
+
+In NetworkTopologyStrategy, replicas are set for each data center separately. NetworkTopologyStrategy places replicas in the clockwise direction in the ring until reaches the first node in another rack.
+
+This strategy tries to place replicas on different racks in the same data center. This is due to the reason that sometimes failure or problem can occur in the rack. Then replicas on other nodes can provide data.
+
+A Bloom filter is a generic data structure used to check if an element is present in a set or not. Its algorithm is designed to be extremely fast, at the cost of risking to return false positives.
+
+- auth_method config
+ejabberd_auth.erl
+auth_modules(Server) ->
+    LServer = jid:nameprep(Server),
+    Default = ejabberd_config:default_db(LServer, ?MODULE),
+    Methods = ejabberd_config:get_option({auth_method, LServer}, [Default]),
+    [misc:binary_to_atom(<<"ejabberd_auth_",
+			   (misc:atom_to_binary(M))/binary>>)
+     || M <- Methods].
+
+mod_opt_type in gen_mod..erl as callback, defined in mod_mam.erl
+mod_mam_sql used because of (in gen_mod.erl):
+db_mod(Type, Module) when is_atom(Type) ->
+    list_to_atom(atom_to_list(Module) ++ "_" ++ atom_to_list(Type));
+
+mod_mam_sql.erl submodule of mod_mam.erl becouse implements mod_mam_sql behaviour.
+then, in mod_mam.erl start function:
+	Mod = gen_mod:db_mod(Host, Opts, ?MODULE),
+
+
+mod_mam_cassandra.erl
+ejabberd_cassandra.erl
+p1_mysql_auth.erl
+p1_mysql_conn.erl
+p1_mysql.erl
+
+NoSQL characteristic:
+- run on cluster
+- not using SQL (although cassandra has CQL which is similar to SQL)
+- not relational
+- open source
+- using no schema
+
+Thus, when “NoSQL” is applied to a
+database, it refers to an ill-defined set of mostly open-source databases, mostly developed in the
+early 21st century, and mostly not using SQL.
+
+SQL -> integration database
+
+two primary reasons for considering
+NoSQL. One is to handle data access with sizes and performance that demand a cluster; the other is to
+improve the productivity of application development by using a more convenient data interaction
+style.
+
+we’ll mostly
+be using “data model” to refer to the model by which the database organizes data—what might be
+more formally called a metamodel.
+
+relational -> fix -> satu sama ain berelasi
+nosql -> fleksibel -> bisa nested
+
+aggregate is a collection of related objects that we wish to treat as a unit
+
+This can be expressed in the
+relational model in terms of foreign key relationships—but there is nothing to distinguish
+relationships that represent aggregations from those that don’t. As a result, the database can’t use a
+knowledge of aggregate structure to help it store and distribute the data.
+Relational databases have no concept of aggregate within their data model, so we call them
+aggregate-ignorant.
+By explicitly
+including aggregates, we give the database important information about which bits of data will be
+manipulated together, and thus should live on the same node.
+In general, it’s true that aggregate-oriented
+databases don’t have ACID transactions that span multiple aggregates. Instead, they support atomic
+manipulation of a single aggregate at a time.
+This terminology is as established by Google Bigtable and HBase, but Cassandra looks at things
+slightly differently. A row in Cassandra only occurs in one column family, but that column family may
+contain supercolumns—columns that contain nested columns. The supercolumns in Cassandra are the
+best equivalent to the classic Bigtable column families.
+Skinny rows have few columns with the
+same columns used across the many different rows. In this case, the column family defines a record
+type, each row is a record, and each column is a field. A wide row has many columns (perhaps
+thousands), with rows having very different columns. A wide column family models a list, with each
+column being one element in that list.
+This aggregate is central to running on a cluster, as the database will ensure that all the data for an
+aggregate is stored together on one node. The aggregate also acts as the atomic unit for updates,
+providing a useful, if limited, amount of transactional control.
+Graph database -> for retrieving complex relationship query
+
+But usually we do with our data more than this, and we do it with programs that need
+to know that the billing address is called billingAddress and not addressForBilling and that the
+quantify field is going to be an integer 5 and not five .
+
+So, however schemaless our database is, there is usually an implicit schema present.
+This implicit schema is a set of assumptions about the data’s structure in the code that manipulates the
+data.
+
+relational databases support the
+notion of transactions. Providing Martin wraps his two writes in a transaction, the system guarantees
+that Pramod will either read both data items before the update or both after the update.
+
+graph databases tend to support
+ACID transactions just the same as relational databases.
+
+Secondly, aggregate-oriented databases do support atomic updates, but only within a single
+aggregate. This means that you will have logical consistency within an aggregate but not between
+aggregates. So in the example, you could avoid running into that inconsistency if the order, the
+delivery charge, and the line items are all part of a single order aggregate.
+
+The length of time an
+inconsistency is present is called the inconsistency window. A NoSQL system may have a quite short
+inconsistency window
+
+read-write consistency: logical consistency vs replication consistency
+
+Consistency is pretty much as we’ve defined it so far. Availability has a particular meaning in the
+context of CAP—it means that if you can talk to a node in the cluster, it can read and write data.
+That’s subtly different from the usual meaning, which we’ll explore later. Partition tolerance means
+that the cluster can survive communication breakages in the cluster that separate the cluster into
+multiple partitions unable to communicate with each other (situation known as a split brain
+
+Durability: As it turns out, there are cases where you may want to trade off some durability for higher
+performance. If a database can run mostly in memory, apply updates to its in-memory representation,
+and periodically flush changes to disk, then it may be able to provide substantially higher
+responsiveness to requests. The cost is that, should the server crash, any updates since the last flush
+will be lost.
+Another class of durability tradeoffs comes up with replicated data. A failure of replication
+durability occurs when a node processes an update but fails before that update is replicated to the
+other nodes. A simple case of this may happen if you have a master-slave distribution model where
+the slaves appoint a new master automatically should the existing master fail. If a master does fail,
+any writes not passed onto the replicas will effectively become lost.
+
+This relationship between the number of nodes you need to contact for a read ( R ), those confirming
+a write ( W ), and the replication factor ( N ) can be captured in an inequality: You can have a strongly
+consistent read if R + W > N .
+
+Map-Reduce -> distributed query approach
+The map-reduce pattern (a form of Scatter-Gather [Hohpe and Woolf]) is a way to organize
+processing in such a way as to take advantage of multiple machines on a cluster while keeping as
+much processing and the data it needs together on the same machine.
+
+A map is a function whose input is a single aggregate and whose output is a bunch of key-
+value pairs.
+
+A map operation only operates on a single record; the reduce function takes multiple map outputs
+with the same key and combines their values. So, a map function might yield 1000 line items from
+orders for “Database Refactoring”; the reduce function would reduce down to one, with the totals for
+the quantity and revenue.
+While the map function is limited to working only on data from a single
+aggregate, the reduce function can use all values emitted for a single key
+
+A combiner function cuts this data down by combining all the data for the same key intoa single value (see Figure 7.4).
+The reduce function needs a special shape for this to work: Its output must match its input.
+But this reducer’s output is different from its input, so it can’t be used as a combiner.
+
+- Map
+  - input: agregates
+  - output: key-value (ex: platform dan jumlah pemakainya)
+
+Combining reduces data before sending it across the network.
+
+Not all reduce functions are combinable. Consider a function that counts the number of unique
+customers for a particular product. The map function for such an operation would need to emit the
+product and the customer. The reducer can then combine them and count how many times each
+customer appears for a particular product, emitting the product and the count (see Figure 7.5). But this
+reducer’s output is different from its input, so it can’t be used as a combiner.
+
+==============================================================================================
+
+Cassandra:
+Each of these key-value pairs is a single column and is always stored with a timestamp value. The
+timestamp is used to expire data, resolve write conflicts, deal with stale data, and do other things.
+
+A row is a collection of columns attached or linked to a key; a collection of similar rows makes a
+column family.
+
+//column family
+{
+//row
+"pramod-sadalage" : {
+firstName: "Pramod",
+lastName: "Sadalage",
+lastVisit: "2012/12/12"
+}
+//row
+"martin-fowler" : {
+firstName: "Martin",
+lastName: "Fowler",
+location: "Boston"
+}
+}
+
+super-column:
+{
+name: "book:978-0767905923",
+value: {
+author: "Mitch Albon",
+title: "Tuesdays with Morrie",
+isbn: "978-0767905923"
+}
+
+super-collumn family:
+//super column family
+{
+//row
+name: "billing:martin-fowler",
+value: {
+address: {
+name: "address:default",
+value: {
+fullName: "Martin Fowler",
+street:"100 N. Main Street",
+zip: "20145"
+}
+},
+billing: {
+name: "billing:default",
+value: {
+creditcard: "8888-8888-8888-8888",
+expDate: "12/2016"
+}
+}
+}
+//row
+name: "billing:pramod-sadalage",
+value: {
+address: {
+name: "address:default",
+value: {
+fullName: "Pramod Sadalage",
+street:"100 E. State Parkway",
+zip: "54130"
+}
+},
+billing: {
+name: "billing:default",
+value: {
+creditcard: "9999-8888-7777-4444",
+expDate: "01/2016"
+}
+}
+}
+}
+
+Cassandra writes:
+commit log -> memtable -> SSTable
+Cassandra:
+While a node is down, the data that was supposed to be stored by that node is handed off to other
+nodes. As the node comes back online, the changes made to the data are handed back to the node. Thistechnique is known as hinted handoff.
+Cassandra does not have transactions in the traditional sense—where we could start multiple writes
+and then decide if we want to commit the changes or not.
+You should set up your keyspaces and read/write operations based on your needs—higher
+availability for write or higher availability for read. W+R>N.
+
+Cassandra allows you to index columns other than the keys for the column family. We can define an
+index on the city column.
+Click here to view code image
+UPDATE COLUMN FAMILY Customer
+WITH comparator = UTF8Type
+AND column_metadata = [{column_name: city,validation_class: UTF8Type,
+index_type: KEYS}];
+We can now query directly against the indexed column.
+GET Customer WHERE city = 'Boston';
+
+Column-family databases with their ability to store any data structures are a great choice to store
+event information, such as application state or errors encountered by the application.
+
+Cassandra use case:
+- Event Logging:
+	Within the enterprise, all applications can write their events to Cassandra with their own columns and the
+	rowkey of the form appname:timestamp . Since we can scale writes, Cassandra would work ideally
+	for an event logging system
+- Visitor Counter:
+	Often, in web applications you need to count and categorize visitors of a page to calculate analytics.
+	You can use the CounterColumnType during creation of a column family.
+- Expiring Usage:
+	You may provide demo access to users, or may want to show ad banners on a website for a specific
+	time. You can do this by using expiring columns: Cassandra allows you to have columns which, after
+	a given time, are deleted automatically.
+
+RDBMS impose high cost on schema change, which is traded off for a low cost of query
+change; in Cassandra, the cost may be higher for query change as compared to schema change.
+
+
+CREATE KEYSPACE coba
+  WITH REPLICATION = { 
+   'class' : 'SimpleStrategy', 
+   'replication_factor' : 1 
+  };
+
+  {ok, Client} = cqerl:get_client("127.0.0.1:9042", [{keyspace, coba}]).
+
+Cassandra:
+- Super column family contains super column
+- expiring column
+- counter column
+=================================
+Cassandra column = name(as key) + value + timestamp (automatically added)
+The timestamp is used to expire data, resolve write conflicts, deal with stale data, and do other things.
+
+Super column families are good to keep related data together, but when some of the columns are
+not needed most of the time, the columns are still fetched and deserialized by Cassandra, which may
+not be optimal.
+
+Column-value consistency:
+If we have a consistency
+setting of ONE as the default for all read operations, then when a read request is made, Cassandra
+returns the data from the first replica, even if the data is stale. -> lalu read repair
+The low consistency level is good to use when you do not care if you get stale data and/or if you have high read performance
+requirements.
+Using ALL as consistency level means that all nodes will have to respond to reads or writes, which
+will make the cluster not tolerant to faults—even when one node is down, the write or read is
+blocked and reported as a failure.
+
+Cassandra tidak memiliki transaction, jika ingin pemrosesan data yg tidak terpotong di tengah2, letakkan data2 tersebut dalam satu agregat.
+
+Dalam cassandra tiap node adalah peer, bukan master-slave.
+
+=================================
+Materialized View
+Although NoSQL databases don’t have views, they may have precomputed and cached queries, and
+they reuse the term “materialized view” to describe them. Central aspect. can use map-reduce computation.
+
+This causes index performance to scale poorly with cluster size: as the cluster grows, the overhead of coordinating the scatter/gather starts to dominate query performance.
+
+There are two rough strategies to building a materialized view. The first is the eager approach
+where you update the materialized view at the same time you update the base data for it. If you don’t want to pay that overhead on each update, you can run batch jobs to update the
+materialized views at regular intervals.
+=============== MV ===============
+Thus, for performance-critical queries the recommended approach has been to denormalize into another table, as Tyler outlined:
+
+CREATE TABLE users_by_name (
+    username text PRIMARY KEY,
+    id uuid
+);
+Now we can look look up users with a partitioned primary key lookup against a single node, giving us performance identical to primary key queries against the base table itself--but these tables must be kept in sync with the users table by application code.  
+
+Materialized views give you the performance benefits of denormalization, but are automatically updated by Cassandra whenever the base table is:
+
+CREATE MATERIALIZED VIEW users_by_name AS 
+SELECT * FROM users 
+WHERE username IS NOT NULL
+PRIMARY KEY (username, id);
+
+Aggregates can also be used to obtain analytics; for example, an aggregate update may fill in
+information on which Order s have a given Product in them.
+{
+"itemid":27,
+"orders":{99,545,897,678}
+}
+
+====================================
+
+mod_mam:
+  db_type: sql    ##mnesia|odbc
+  default: always   ##always|never|roster
+  cache_size: 1000
+  cache_life_time: 3600
+opsi-opsi di atas dipanggil pada modul mod_mam.erl
+
+NoSQL denormalization -> mengakibatkan eventually consistent
+
+#####Secondary Index vs Materialized View#####
+Let’s say that we have the following users table:
+
+CREATE TABLE users(
+    user_id bigint,
+    firstname text,
+    lastname text,
+    ...
+    country text,
+    ...
+    PRIMARY KEY(user_id)  
+);
+Such table structure only allows you to lookup user by user_id only. If we create a secondary index on the column country, the index would be a hidden table with the following structure
+
+CREATE TABLE country_index(
+    country text,
+    user_id bigint,
+    PRIMARY KEY((country), user_id) 
+);
+
+## Kasus 1
+saat query selalu menggunaakan primary index juga, lebih baik pakai secondary index daripada materialized view
+
+Do not use an index in these situations:
+
+On high-cardinality columns because you then query a huge volume of records for a small number of results. [...] Conversely, creating an index on an extremely low-cardinality column, such as a boolean column, does not make sense.
+In tables that use a counter column
+On a frequently updated or deleted column.
+To look for a row in a large partition unless narrowly queried.
+
+What to learn:
+- transaction dlm NoSQL
+- materialized view vs secondary index dlm NoSQL
+- partitioning dlm Cassandra
+- consistency level dlm Cassandra
+- availability dlm Cassandra
+- join in NoSQL
+
+#### NoSQL Distilled Part 2
+The claim that NoSQL databases are entirely schemaless is misleading; while they store the data
+without regard to the schema the data adheres to, that schema has to be defined by the application,
+because the data stream has to be parsed by the application when reading the data from the database.
+
+- Data lama harus bisa diparse oleh code baru: -> solusi mengubah seluruh data, atau asal setiap data lama bisa diparse -> inceremental
+- Adanya softschema
+Once we deploy this change, new customers and their orders can be saved and read back without
+problems, but for existing orders the price of their product cannot be read, because now the code is
+looking for fullPrice but the document has only price .
+
+NoSQL bisa transaksi tapi levelnya renda, misal hanya level dokumen seperti MongoDB dan Cassandra yg memiliki atomicity 
+NoSQL support ACID transaction: Neo4j, RavenDB (snapshot isolation), MarkLogic, FoundationDB, Orientdb
+
+###### NoSQL Join #########
+To demonstrate that, let's take a look at the following situation:
+
+We have a high-traffic website
+We want to display 20 photos per result page
+But only 1 in 5000 users has popular photos
+In such a situation we need to fetch more users in order to get more popular photos. It's easy to see that this doesn't scale because we have to fetch too much content out of the database at the same time.
+solusi eventually consistent -> background task
+The important advantage of materialized views is that we don't have conflicts between users editing properties of their photos and background tasks updating denormalized properties anymore.
+
+However, unless you use CouchDB views, map/reduce isn't incremental. What we've built here is a materialized view which updates only the affected entities. In contrast, map/reduce implementations like in MongoDB rebuild the whole index and that requires a lot more resources if you have a large and popular website. 
+
+################ NoSQL Modeling ##################
+
+First, we should note that SQL and relational model in general were designed long time ago to interact with the end user. This user-oriented nature had vast implications:
+
+The end user is often interested in aggregated reporting information, not in separate data items, and SQL pays a lot of attention to this aspect.
+No one can expect human users to explicitly control concurrency, integrity, consistency, or data type validity. That’s why SQL pays a lot of attention to transactional guaranties, schemas, and referential integrity.
+
+NoSQL data modeling often starts from the application-specific queries as opposed to relational modeling:
+Relational modeling is typically driven by the structure of available data. The main design theme is  “What answers do I have?” 
+NoSQL data modeling is typically driven by application-specific access patterns, i.e. the types of queries to be supported. The main design theme is “What questions do I have?”  
+
+Key-Value Stores: Oracle Coherence, Redis, Kyoto Cabinet
+BigTable-style Databases: Apache HBase, Apache Cassandra
+Document Databases: MongoDB, CouchDB
+Full Text Search Engines: Apache Lucene, Apache Solr
+Graph Databases: neo4j, FlockDB
+
+Konsep pada NoSQL:
+- Denormalization
+- Aggregation
+- Application Side Join
+- Atomic Aggregates
+- Enumerable keys
+    Some NoSQL stores provide atomic counters that allow one to generate sequential IDs. In this case one can store messages using userID_messageID as a composite key. If the latest message ID is known, it is possible to traverse previous messages. It is also possible to traverse preceding and succeeding messages for any given message ID.
+    Messages can be grouped into buckets, for example, daily buckets. This allows one to traverse a mail box backward or forward starting from any specified date or the current date.
+
+we can use keys in a format (State:City:UserID) that allow us to iterate over records for a particular state or city if that store supports the selection of key ranges by a partial key match (as BigTable-style systems do)
+
+========================================
+
+Column-family:
+The row key must be unique within a column family, but the same row key can be reused in another column family.
+
+We can also use different data types for each row key.
+e.g. User-1 wants to use a Mobile Number as row key and User-2 wants to use an Email address as row key.
+This is possible.
+
+Each Column Family store in a file and each file separately stores into Disk.
+The benefit of storing data in the column, is fast searching and accessing of the data.
+
+For example, we have two column family one for User’s Profile and second for User’s Friends.
+Now I want to fetch User’s Profile data, then It accesses only one User’s Profile file which returns good performance.
+
+==========================================================
+
+Fetching supercolumn beda dgn fetching column biasa
+
+One limitation is that all sub-columns of a super column family must be de-serialized to read a single sub-column family.
+Another limitation is that we cannot create secondary indexes on the sub-columns of  a super column.
+
+=======================================================
+#########Starting cqerl
+1> ok = application:start(crypto).
+ok
+2> ok = application:start(asn1).      
+ok
+3> ok = application:start(public_key).
+ok
+4> ok = application:start(ssl).       
+ok
+5> ok = application:start(pooler).
+ok
+6> ok = application:start(re2).  
+ok
+7> ok = application:start(semver).
+ok
+8> ok = application:start(snappy).
+ok
+9> ok = application:start(lz4).  
+ok
+10> ok = application:start(quickrand).
+ok
+11> ok = application:start(uuid).     
+ok
+12> ok = application:start(cqerl).    
+ok
+
+=========================================
+##### Keys in Cassandra
+- The Partition Key is responsible for data distribution across your nodes.
+- The Clustering Key is responsible for data sorting within the partition.
+- The Primary Key is equivalent to the Partition Key in a single-field-key table.
+- The Composite/Compound Key is just a multiple-columns key
+
+**Important note: the partition key is the minimum-specifier needed to perform a query using where clause. If you have a composite partition key, like the following
+
+eg: PRIMARY KEY((col1, col2), col10, col4))
+
+You can perform query only passing at least both col1 and col2, these are the 2 columns that defines the partition key. The "general" rule to make query is you have to pass at least all partition key columns, then you can add each key in the order they're set.
+
+so the valid queries are (excluding secondary indexes)
+col1 and col2
+col1 and col2 and col10
+col1 and col2 and col10 and col 4
+
+Invalid:
+col1 and col2 and col4
+anything that does not contain both col1 and col2
+==========================================
+
+#### Materialized View vs Index
+- Index berguna ketika querynya analytic, atau ketika melakukan full-text search (karena perlu mengunjungi setiap node)
+Memtables and SSTables are maintained per table. SSTables are immutable, not written to again after the memtable is flushed. Consequently, a partition is typically stored across multiple SSTable files.
+
+For each SSTable, Cassandra creates these structures:
+Partition index
+A list of partition keys and the start position of rows in the data file written on disk
+Partition summary
+A sample of the partition index stored in memory
+Bloom filter
+A structure stored in memory that checks if row data exists in the memtable before accessing SSTables on disk
+
+commit log replay -> cek yg belum di-write seletah restart -> disarankan flush sblm restart
+
+The difference is that MV denormalizes the entire row and not just the primary key, which makes reads more performant at the expense of needing to pay the entire consistency price at write time.
+
+MV on update -> read-before-write -> update, fetch existing record, remove from MV, insert to MV.
+
+Performance summary:
+Reading from a normal table or MV has identical performance.
+Each MV will cost you about 10% performance at write time.
+For simple primary keys (tables with one row per partition), MV will be about twice as fast as manually denormalizing the same data.
+For compound primary keys, MV are still twice as fast for updates but manual denormalization can better optimize inserts.  The crossover point where manual becomes faster is a few hundred rows per partition.  CASSANDRA-9779 is open to address this limitation.
+========================
+#### Data Modelling
+The partition key determines which node stores the data. It is responsible for data distribution across the nodes. The additional columns determine per-partition clustering. Clustering is a storage engine process that sorts data within the partition.
+
+In a relational database, to allow users to have multiple email addresses, you create an email_addresses table having a many-to-one (joined) relationship to a users table. CQL handles the classic multiple email addresses use case, and other use cases, by defining columns as collections. Using the set collection type to solve the multiple email addresses problem is convenient and intuitive.
+
+Set:
+Using the set data type, you can solve the multiple email problem in an intuitive way that does not require a read before adding a new email address.
+List:
+Also, use a list when you need to store same value multiple times. List values are returned according to their index value in the list, whereas set values are returned in alphabetical order, assuming the values are text.
+When you add an element at a particular position, Apache Cassandra™ reads the entire list, and then writes only the updated element.
+
+Update set dan list tinggal ditambah, update map -> Inserting data into the map replaces the entire map.
+Indexing in Map ->
+- Index the map
+CREATE INDEX ON playlists (tags);
+CREATE INDEX mymapvalues ON playlists (venue);
+- Index the keys
+DROP INDEX mymapvalues; ### can't coexist
+CREATE INDEX mymapkeys ON playlists (KEYS(venue));
+
+### Filtering
+-list & map
+SELECT album, tags FROM playlists WHERE tags CONTAINS 'blues';
+-index the map
+SELECT artist, venue FROM playlists WHERE venue CONTAINS 'The Fillmore';
+-index the keys
+SELECT album, venue FROM playlists WHERE venue CONTAINS KEY '2013-09-22 22:00:00-0700';
+
+Use collections when you want to store or denormalize a small amount of data. Values of items in collections are limited to 64K.
+If the data you need to store has unbounded growth potential, such as all the messages sent by a user or events registered by a sensor, do not use collections. Instead, use a table having a compound primary key and store data in the clustering columns.
+
+Cassandra stores tombstones in the index until the tombstone limit reaches 100K cells. After exceeding the tombstone limit, the query that uses the indexed value will fail.
+
+if your background is with relational databases, it might surprise you to learn that indexes Cassandra can only be used for equality queries (think WHERE field = value).
+
+SASI is the abbreviated name for SSTable Attached Secondary Indexes. They're called this for a very good reason. SASI works by generating an index for each sstable, instead of managing the indexes independently.
+
+SASI -> SSTable Attached Secondary Index -> support range query (seperti lebih besar, lebih kecil, dll.)
+
+In Cassandra, a write operation is atomic at the partition level, meaning the insertions or updates of two or more rows in the same partition are treated as one write operation. A delete operation is also atomic at the partition level.
+
+full row-level isolation. This means that a write to a row within a single partition on a single node is only visible to the client performing the operation – the operation is restricted to this scope until it is complete.
+
+You can manage the local durability to suit your needs for consistency using the commitlog_sync option in the cassandra.yaml file.
+
+A replication factor of 2 means two copies of each row, where each copy is on a different node. All replicas are equally important; there is no primary or master replica.
+
+Cassandra term:
+a node is a cassandra instance (in production: one node per machine)
+a partition is one ordered and replicable unit of data on a node
+a rack is a logical set of nodes
+a Data Center is a logical set or racks
+Cluster is the full set of nodes which map to a single complete token ring
+
+QUORUM (RF/2+1)
+CL may vary for each request
+Partitionners: a system on each node hashing primary key values into a token to be used as a partition key
+A coordinator is the node chosen by the client to receive a particular read or write request to its cluster (can be any node).
+So if we do INSERT INTO Users (firstname,lastname,level) VALUES ('oscar','orange',42), "orange, oscar" is passed to the partitionner and token value is calculated, then coordinator determines which node hold the primary range for this token.
+
+Hinted handoff -> jika ada down, handedoff ke tetangganya (di dalam system.hints), setelah on kembalikan lagi
+All partitions are "replicas", there are no "original". 
+
+###QUESTION###
+apakah seluruh replica memiliki partition key yg sama atau bisa beda karena setiap partition itu dalam satu node sedangkan replica bisa beda node?
+
+NetworkTopology Strategi -> definisikan replica tiap data center. dalam tiap data center, putari ring clockwise hingga pindah rack, lalu tempatkan replica, agar setiap replica beda rack.
+
+Data in Cassandra is often arranged as one query per table, and data is repeated amongst many tables, a process known as denormalization. Relational databases instead normalize data, removing as much duplication as possible.
+Client-side joins in application code is used only when table schema cannot capture the complexity of the relationships.
+
+#Perlu analisis
+Partition & disk limitation can be needed
+Data redundancy & duplication
+In Cassandra, the goal is to use one table per query for performant behavior. Lightweight transactions (LWT) can also affect performance. Consider whether or not the queries using LWT are necessary and remove the requirement if it is not strictly needed.
+
+==========================================================
+##########Cassandra Collection
+
+1. Set
+add element -> update set emails = emails + {'email@baru.com'}
+remove element -> update set emails = emails - {'fb@friendsofmordor.org'}
+When you query a table containing a collection, Apache Cassandra™ retrieves the collection in its entirety; so, keep collections small enough to be manageable, or create new data model (misalnya id dan email jadi composite key)
+Cassandra returns query results in an order based on the type of the elements in the collection.
+delete all -> email = {}, or delete emails where ...
+
+2. List
+List values are returned according to their index value in the list,
+prepend -> update set top_places = [ 'the shire' ] + top_places
+prepend & append implemented internally without any read-before-write, and only writes the new element
+insert at particular position -> update set top_places[2] = 'riddermark' -> reads the entire list, and then writes only the updated element.
+remove list element -> delete top_places[3]
+remove element using particular value -> update set top_places = top_places - ['riddermark'] -> penggunaan update recomended over manually in client-side using index as previous example
+
+3. Map
+insert to map -> set todo = todo + { '2013-9-22 12:01' : 'birthday wishes to Bilbo', '2013-10-1 18:00': 'Check into Inn of Pracing Pony'} -> this will replace the entire map
+select -> The order of the map output depends on the type of the map.
+Compute the TTL to use to expire todo list elements on the day of the timestamp, and set the elements to expire.
+UPDATE users USING TTL <computed_ttl>
+  SET todo['2012-10-1'] = 'find water' WHERE user_id = 'frodo';
+
+**A set, list, or map needs to have at least one element; otherwise, Apache Cassandra™ cannot distinguish the set from a null value.

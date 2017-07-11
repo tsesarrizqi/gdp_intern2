@@ -1,0 +1,22 @@
+Consistency meaning if and how a system is in a consistent state after the execution of an operation. A
+distributed system is typically considered to be consistent if after an update operation of some writer
+all readers see his updates in some shared data source. (Nevertheless there are several alternatives
+towards this strict notion of consistency as we will see below.)
+Availability and especially high availability meaning that a system is designed and implemented in a way
+that allows it to continue operation (i. e. allowing read and write operations) if e. g. nodes in a cluster
+crash or some hardware or software parts are down due to upgrades.
+Partition Tolerance understood as the ability of the system to continue operation in the presence of
+network partitions. These occur if two or more “islands” of network nodes arise which (temporarily
+or permanently) cannot connect to each other. Some people also understand partition tolerance as
+the ability of a system to cope with the dynamic addition and removal of nodes (e. g. for maintainance
+purposes; removed and again added nodes are considered an own network partition in this notion; cf.
+[Ipp09]).
+
+Atomic
+All operations in a transaction succeed or every operation is rolled back.
+Consistent
+On the completion of a transaction, the database is structurally sound.
+Isolated
+Transactions do not contend with one another. Contentious access to data is moderated by the database so that transactions appear to run sequentially.
+Durable
+The results of applying a transaction are permanent, even in the presence of failures.

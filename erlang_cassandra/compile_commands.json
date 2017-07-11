@@ -1,0 +1,6 @@
+[
+{ "file"      : "/home/tsesar/gdp_intern2/erlang_cassandra/_build/default/lib/re2/c_src/re2_nif.cpp"
+, "directory" : "/home/tsesar/gdp_intern2/erlang_cassandra/_build/default/lib/re2"
+, "command"   : "c++ -c -g -Wall -fPIC -MMD -I\"/usr/lib/erlang/lib/erl_interface-3.8.2/include\" -I\"/usr/lib/erlang/erts-7.3/include\" -O3 -Wall -Wextra -std=c++11 -Ic_src/re2 /home/tsesar/gdp_intern2/erlang_cassandra/_build/default/lib/re2/c_src/re2_nif.cpp -o /home/tsesar/gdp_intern2/erlang_cassandra/_build/default/lib/re2/c_src/re2_nif.o"
+}
+]
