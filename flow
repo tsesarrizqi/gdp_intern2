@@ -847,27 +847,121 @@ INSERT INTO cycling.calendar (race_id, race_name, race_start_date, race_end_date
 
 A table contains a timestamp representing the date/time that a write occurred to a column.
 SELECT WRITETIME (firstname) FROM cycling.cyclist_points WHERE id=220844bf-4860-49d6-9a4b-6b5d3a79cbfb;
+
+##Read repair -> Read repair means that when a query is made against a given key, we perform a digest query against all the replicas of the key and push the most recent version to any out-of-date replicas. If a lower ConsistencyLevel than ALL was specified, this is done in the background after returning the data from the closest replica to the client; otherwise, it is done before returning the data. This means that in almost all cases, at most the first instance of a query will return old data.
+
+materialized view -> bisa index -> bagus di cassandra daripada buat tabel denormalisasi manual -> dapat dimanfaatkan untuk mencari menggunakan partition key yg berbeda
+
+semakin tinggi consistency level semakin konsisten seluruh nodes -> misal konsistensi level 3, maka pada read/write ketiga node pasti konsisten (agree to 1 value), sedangkan replica sisanya menjadi eventual consistent (dilakukan dengan read repair pada replicas. materialized view juga eventually consistent)
+
+Even at low consistency levels, the write is still sent to all replicas for the written key, even replicas in other data centers. The consistency level just determines how many replicas are required to respond that they received the write.
+
+A Cassandra cluster is visualised as a ring because it uses a consistent hashing algorithm to distribute data. At start up each node is assigned a token range which determines its position in the cluster and the rage of data stored by the node. Each node receives a proportionate range of the token ranges to ensure that data is spread evenly across the ring. The figure above illustrates dividing a 0 to 255 token range evenly amongst a four node cluster. Each node is assigned a token and is responsible for token values from the previous token (exclusive) to the node's token (inclusive).
+
+Each node in a Cassandra cluster is responsible for a certain set of data which is determined by the partitioner. A partitioner is a hash function for computing the resultant token for a particular row key. This token is then used to determine the node which will store the first replica.
+Basically, a partitioner is a function for deriving a token representing a row from its partion key, typically by hashing. Each row of data is then distributed across the cluster by the value of the token.
+
+A hash function is any function that can be used to map data of arbitrary size to data of fixed size. The values returned by a hash function are called hash values, hash codes, digests, or simply hashes. -> generate representation (misal string direpresentasikan sbg integer supaya sortingnya mudah) -> proses transformasinya disebut hashing.
+
+Hashing is used to index and retrieve items in a database because it is faster to find the item using the shorter hashed key than to find it using the original value.
+
+Like tables, indexes consist of rows and columns but store the data in a logically sorted manner to improve search performance. Think of it like a telephone book (a printed one). They are usually sorted last_name, first_name and potentially other criteria (e.g. zip code). This sorting makes it possible to find all entries for a specific last name quickly. If you know the first name too, you can even find the entries for the combination last name/first name very quickly.
+
+If you just know the first name, however, the telephone book does not really help you. The very same is true for multi-column database indexes. So yes, an index can potentially improve search performance. If you have the wrong index for your question (e.g. a phonebook when searching by first name) they might be useless.
+
+An index is a copy of selected columns of data from a table that can be searched very efficiently that also includes a low-level disk block address or direct link to the complete row of data it was copied from.
+
+Indexing is a way of sorting a number of records on multiple fields. Creating an index on a field in a table creates another data structure which holds the field value, and pointer to the record it relates to. This index structure is then sorted, allowing Binary Searches to be performed on it.
+
+##Partitioner
+Murmur3Partitioner (default): uniformly distributes data across the cluster based on MurmurHash hash values.
+RandomPartitioner: uniformly distributes data across the cluster based on MD5 hash values.
+ByteOrderedPartitioner: keeps an ordered distribution of data lexically by key bytes
+
+#Caching
+With row caching enabled, Cassandra will detect frequently accessed partitions and store rows of data into RAM to limit the cases where it needs to read from disk.
+
+**menarik
+In read repair, Cassandra sends a digest request to each replica not directly involved in the read. Cassandra compares all replicas and writes the most recent version to any replica node that does not have it. If the query's consistency level is above ONE, Cassandra performs this process on all replica nodes in the foreground before the data is returned to the client. Read repair repairs any node queried by the read.
+
+read_repair_chanse -> Specifies the probability with which read repairs should be invoked on non-quorum reads.
+
+A foreground read repair occurs when there is a mismatch discovered while reading from the chosen targets. So e.g. if your RF is 3 and you read at CL.QUORUM then if the 2 chosen replicas disagree, a blocking read repair is done to ensure you get the latest value from the 2 replicas. -> make perfect sense -> jika dissagree bukan berarti ada yg latest
+
+*** sangat menarik
+Since W+R > N, any node set chosen for reading will always intersect with any node set chosen for writing, and so Abby's data is guaranteed to be consistent
+
+These caches are built into Cassandra and provide very efficient data caching: 
+• Key cache: a cache of the primary key index for a Cassandra table. Enabled by default. 
+• Row cache: similar to a traditional cache like memcached. Holds the entire row in memory so reads can be satisfied without using disk. Disabled by default.
+
+Using only the key cache makes the row cache available for other column families that need it. 
+urutannya -> cek row cache -> jika tidak ada, cek key cache -> 
+key cache -> Using the default key cache setting, or a higher one, works well in most cases.
+Row caching is recommended in these cases: 
+• Data access patterns follow a normal (Gaussian) distribution. 
+• Rows contain heavily-read data and queries frequently return data from most or all of the columns.
+
+In the background, Cassandra periodically merges SSTables together into larger SSTables using a process called compaction. 
+Compaction impacts read performance in two ways. While a compaction is in progress, it temporarily increases disk I/O and disk utilization which can impact read performance for reads that are not fulfilled by the cache. However, after a compaction has been completed, off-cache read performance improves since there are fewer SSTable files on disk that need to be checked in order to complete a read request.
+### casssandra model ###
+Yes, the "column-oriented" terminology is a bit confusing.
+
+The model in Cassandra is that rows contain columns. To access the smallest unit of data (a column) you have to specify first the row name (key), then the column name.
+
+So in a columnfamily called Fruit you could have a structure like the following example (with 2 rows), where the fruit types are the row keys, and the columns each have a name and value.
+
+apple -> colour  weight  price variety
+         "red"   100     40    "Cox"
+
+orange -> colour    weight  price  origin
+          "orange"  120     50     "Spain"
+One difference from a table-based relational database is that one can omit columns (orange has no variety), or add arbitrary columns (orange has origin) at any time. You can still imagine the data above as a table, albeit a sparse one where many values might be empty.
+
+However, a "column-oriented" model can also be used for lists and time series, where every column name is unique (and here we have just one row, but we could have thousands or millions of columns):
+
+temperature ->  2012-09-01  2012-09-02  2012-09-03 ...
+                40          41          39         ...
+which is quite different from a relational model, where one would have to model the entries of a time series as rows not columns.
+
+ingat -> nama kolom di cassandra bisa pakai tanda petik dan isinya bisa apa saja
+
+*****
+Cassandra has a sparse data model. We won't create a cell in the underlying sstable if you don't insert a value for a given cql row.
+
+I.E. if you hadn't said DROP email, Jack would not have an empty cell for email unless you deliberately inserted a null / tombstone.
+
+You can introspect sstables using sstable2json to understand how the data is laid out on disk. Remember to use nodetool flush before you try this or you may end up introspecting an empty directory!
+
+It's not strictly true that count is supported only up to 10,000. It works up to the query limit (which is 10,000 by default, but can be explicitly defined). That being said, you probably shouldn't use it for performance reasons.
+
+=================================================
+Cassandra reads
+When a read request for a row comes in to a node, the row must be combined from all SSTables on that node that contain columns from the row in question, as well as from any unflushed memtables, to produce the requested data.
+Bloom filter -> avoid disk IO
+
 ########### PERLU DIPELAJARI ###############
-1. select from tanpa where -> done -> scan all rows -> modeling harus tepat =================================
-2. select count -> done -> scan all rows  ===================================================================
-3. how to use erlcass
+1. select from tanpa where -> done -> scan all rows -> modeling harus tepat ==========================================================
+2. select count -> done -> scan all rows  ============================================================================================
+3. cassandra KV or columnfamily-store -> hybrid ======================================================================================
 4. how to use map reducer
 5. mysql vs cassandra writes & reads
-6. LWT -> done -> use if clause to ensure direct consistency ================================================
-7. SQL view vs materialized view -> done -> contains result of query / precomputed query / cached query =====
-8. How index actually works (mungkin sorted sehingga bisa binary search)
-9. table caching property
-10. cassandra column timestamp (using timestamp)
-11. define TTL cassandra -> done -> ditulis di atas =========================================================
-12. how murmur, ordered, and random parititioner works
-13. cassandra eventual consistency (apakah manual atau otomatis)
-14. Cassandra ring structure
-15. cassandra read-repair
-16. kapan all better than quorum
-17. hashing
-18. cassandra KV or column-store
+6. LWT -> done -> use if clause to ensure direct consistency =========================================================================
+7. SQL view vs materialized view -> done -> contains result of query / precomputed query / cached query ==============================
+8. How index actually works (mungkin sorted sehingga bisa binary search) =============================================================
+9. table caching property ============================================================================================================
+10. cassandra column timestamp (using timestamp) -> untuk set column timestamp -> dapat dibaca dengan writetime(column) ==============
+11. define TTL cassandra -> done -> ditulis di atas ==================================================================================
+12. how murmur, ordered, and random parititioner works ===============================================================================
+13. cassandra eventual consistency (apakah manual atau otomatis) -> done (otomatis di cassandra) =====================================
+14. Cassandra ring structure -> untuk distribusi data dengan token (tiap node punya range token)======================================
+15. cassandra read-repair -> done (tulis di atas) ====================================================================================
+16. cassandra SSTable
+17. hashing -> done (ditulis di atas) ================================================================================================
+18. Cassandra read & write complete process ==========================================================================================
+19. how read repair affect performance -> tergantung consistency level ===============================================================
 
-################### START ERLCASS ##############
+################### START ERLCASS ######################
 application:start(syntax_tools).
 application:start(compiler).
 application:start(goldrush).
