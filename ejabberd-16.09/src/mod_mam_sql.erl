@@ -63,7 +63,7 @@ extended_fields() ->
 
 %%% Dapat dilakukan dengan CQL
 store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
-	{ok, Fd} = file:open("/home/tsesar/Downloads/Newfile2.txt", [append]),
+	{ok, Fd} = file:open("/home/tsesar/gdp_intern2/Newfile2.txt", [append]),
 	file:write(Fd, io_lib:format("~p~n", [Pkt])),
 	file:write(Fd, io_lib:format("~p~n", [LServer])),
 	file:write(Fd, io_lib:format("~p~n", [LUser])),
@@ -145,7 +145,7 @@ write_prefs(LUser, _LServer, #archive_prefs{default = Default,
 					   never = Never,
 					   always = Always},
 	    ServerHost) ->
-	{ok, Fd} = file:open("/home/tsesar/Downloads/Newfile2.txt", [append]),
+	{ok, Fd} = file:open("/home/tsesar/gdp_intern2/Newfile2.txt", [append]),
 	file:write(Fd, io_lib:format("~p~n~p~n~p~n~p~n~p~n~p~n~p~n", [LUser,LUser,_LServer,Default,Never,Always,ServerHost])),
 	file:write(Fd, io_lib:format("#####################write_prefs###############################~n", [])),
     SDefault = erlang:atom_to_binary(Default, utf8),
@@ -168,7 +168,7 @@ write_prefs(LUser, _LServer, #archive_prefs{default = Default,
 
 %%% Dapat dilakukan dengan CQL
 get_prefs(LUser, LServer) ->
-	{ok, Fd} = file:open("/home/tsesar/Downloads/Newfile2.txt", [append]),
+	{ok, Fd} = file:open("/home/tsesar/gdp_intern2/Newfile2.txt", [append]),
 	file:write(Fd, io_lib:format("~p~n~p~n", [LUser,LServer])),
     case ejabberd_sql:sql_query(
 	   LServer,
@@ -193,14 +193,21 @@ get_prefs(LUser, LServer) ->
     end.
 
 %%% perlu dikaji lebih lanjut
+%%% with -> lookup bare_peer
+%%% 
 select(LServer, JidRequestor, #jid{luser = LUser} = JidArchive,
        Start, End, With, RSM, MsgType) ->
+	{ok, Fd} = file:open("/home/tsesar/gdp_intern2/Newfile2.txt", [append]),
+	file:write(Fd, io_lib:format("~p~n~p~n~p~n~p~n~p~n", [Start,End,With,RSM,MsgType])),
+	file:write(Fd, io_lib:format("#######################select#############################~n", [])),
     User = case MsgType of
 	       chat -> LUser;
 	       {groupchat, _Role, _MUCState} -> jid:to_string(JidArchive)
 	   end,
     {Query, CountQuery} = make_sql_query(User, LServer,
 					 Start, End, With, RSM),
+    file:write(Fd, io_lib:format("~p~n~p~n", [Query,CountQuery])),
+	file:write(Fd, io_lib:format("#######################select#############################~n", [])),
     % TODO from XEP-0313 v0.2: "To conserve resources, a server MAY place a
     % reasonable limit on how many stanzas may be pushed to a client in one
     % request. If a query returns a number of stanzas greater than this limit
@@ -210,6 +217,8 @@ select(LServer, JidRequestor, #jid{luser = LUser} = JidArchive,
     case {ejabberd_sql:sql_query(LServer, Query),
 	  ejabberd_sql:sql_query(LServer, CountQuery)} of
 	{{selected, _, Res}, {selected, _, [[Count]]}} ->
+		file:write(Fd, io_lib:format("~p~n~p~n", [Res,Count])),
+		file:write(Fd, io_lib:format("#######################select#############################~n", [])),
 	    {Max, Direction} = case RSM of
 				   #rsm_in{max = M, direction = D} -> {M, D};
 				   _ -> {undefined, undefined}

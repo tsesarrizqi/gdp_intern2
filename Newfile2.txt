@@ -197,3 +197,423 @@ roster
 <<"[{<<\"alice\">>,<<\"localhost\">>,<<>>},{<<\"alice\">>,<<\"localhost\">>,<<\"res2\">>}]">>
 <<"[{<<\"alice\">>,<<\"localhost\">>,<<>>}]">>
 #####################write_prefs###############################
+none
+[]
+none
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,[],[],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,[],[],
+ [],<<";">>]
+#######################select#############################
+<<"alice">>
+<<"localhost">>
+{ok,{archive_prefs,{<<"alice">>,<<"localhost">>},
+                   roster,
+                   [{<<"bob">>,<<"locahost">>,<<"res1">>}],
+                   [{<<"bob">>,<<"localhost">>,<<>>}]}}
+#######################get_prefs#############################
+<<"bob">>
+<<"localhost">>
+{ok,{archive_prefs,{<<"bob">>,<<"localhost">>},
+                   roster,
+                   [{<<"alice">>,<<"localhost">>,<<>>},
+                    {<<"alice">>,<<"localhost">>,<<"res2">>}],
+                   [{<<"alice">>,<<"localhost">>,<<>>}]}}
+#######################get_prefs#############################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"alice@localhost/5280">>},
+        {<<"to">>,<<"bob@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purple111d9e32">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"yang lain">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<"5280">>,<<"alice">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+recv
+
+<<"bob">>
+1499781005462797
+<<"alice@localhost/5280">>
+<<"alice@localhost">>
+<<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e32'><active xmlns='http://jabber.org/protocol/chatstates'/><body>yang lain</body></message>">>
+<<"yang lain">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+########################store############################
+1
+########################store############################
+none
+[]
+none
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"alice">>,<<"'">>,[],[],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"alice">>,<<"'">>,[],
+ [],[],<<";">>]
+#######################select#############################
+none
+[]
+none
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,[],[],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,[],[],
+ [],<<";">>]
+#######################select#############################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"alice@localhost/5280">>},
+        {<<"to">>,<<"bob@localhost">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purple111d9e38">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"lagi">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<"5280">>,<<"alice">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+recv
+
+<<"bob">>
+1499781228384097
+<<"alice@localhost/5280">>
+<<"alice@localhost">>
+<<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e38'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi</body></message>">>
+<<"lagi">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+########################store############################
+1
+########################store############################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost/5280">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purplef094dba4">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"lagi-lagi">>}]}]}
+<<"localhost">>
+<<"bob">>
+<<"localhost">>
+chat
+{jid,<<"alice">>,<<"localhost">>,<<"5280">>,<<"alice">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+send
+
+<<"bob">>
+1499781234373211
+<<"alice@localhost/5280">>
+<<"alice@localhost">>
+<<"<message from='bob@localhost/5280' to='alice@localhost/5280' type='chat' id='purplef094dba4'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi-lagi</body></message>">>
+<<"lagi-lagi">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+########################store############################
+1
+########################store############################
+{xmlel,<<"message">>,
+       [{<<"from">>,<<"bob@localhost/5280">>},
+        {<<"to">>,<<"alice@localhost/5280">>},
+        {<<"type">>,<<"chat">>},
+        {<<"id">>,<<"purplef094dba4">>}],
+       [{xmlel,<<"active">>,
+               [{<<"xmlns">>,<<"http://jabber.org/protocol/chatstates">>}],
+               []},
+        {xmlel,<<"body">>,[],[{xmlcdata,<<"lagi-lagi">>}]}]}
+<<"localhost">>
+<<"alice">>
+<<"localhost">>
+chat
+{jid,<<"bob">>,<<"localhost">>,<<"5280">>,<<"bob">>,<<"localhost">>,
+     <<"5280">>}
+<<>>
+recv
+
+<<"alice">>
+1499781234504979
+<<"bob@localhost/5280">>
+<<"bob@localhost">>
+<<"<message from='bob@localhost/5280' to='alice@localhost/5280' type='chat' id='purplef094dba4'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi-lagi</body></message>">>
+<<"lagi-lagi">>
+<<"chat">>
+<<>>
+
+insert into archive (username, timestamp, peer, bare_peer, xml, txt, kind, nick) values (%(SUser)s, %(TSinteger)d, %(LPeer)s, %(BarePeer)s, %(XML)s, %(Body)s, %(SType)s, %(Nick)s)
+########################store############################
+1
+########################store############################
+none
+[]
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+none
+[]
+{<<"bob">>,<<"localhost">>,<<>>}
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"bob@localhost">>,<<"'">>],
+  [],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"bob@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+{1275,868800,0}
+{1530,969834,0}
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,50,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [<<" and timestamp >= ">>,<<"1275868800000000">>],
+  [<<" and timestamp <= ">>,<<"1530969834000000">>],
+  []],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"51">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [<<" and timestamp >= ">>,<<"1275868800000000">>],
+ [<<" and timestamp <= ">>,<<"1530969834000000">>],
+ <<";">>]
+#######################select#############################
+{1275,868800,0}
+{1530,969834,0}
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,2,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [<<" and timestamp >= ">>,<<"1275868800000000">>],
+  [<<" and timestamp <= ">>,<<"1530969834000000">>],
+  []],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"3">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [<<" and timestamp >= ">>,<<"1275868800000000">>],
+ [<<" and timestamp <= ">>,<<"1530969834000000">>],
+ <<";">>]
+#######################select#############################
+{1275,868800,0}
+{1530,969834,0}
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,2,aft,<<"1499781005462797">>,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [<<" and timestamp >= ">>,<<"1275868800000000">>],
+  [<<" and timestamp <= ">>,<<"1530969834000000">>],
+  [<<" AND timestamp > ">>,<<"1499781005462797">>]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"3">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [<<" and timestamp >= ">>,<<"1275868800000000">>],
+ [<<" and timestamp <= ">>,<<"1530969834000000">>],
+ <<";">>]
+#######################select#############################
+{1528,329600,0}
+{1562,505834,0}
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,2,aft,<<"1499781005462797">>,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [<<" and timestamp >= ">>,<<"1528329600000000">>],
+  [<<" and timestamp <= ">>,<<"1562505834000000">>],
+  [<<" AND timestamp > ">>,<<"1499781005462797">>]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"3">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [<<" and timestamp >= ">>,<<"1528329600000000">>],
+ [<<" and timestamp <= ">>,<<"1562505834000000">>],
+ <<";">>]
+#######################select#############################
+none
+[]
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,2,aft,<<"1499781005462797">>,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [],[],
+  [<<" AND timestamp > ">>,<<"1499781005462797">>]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"3">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+none
+[]
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,2,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"3">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+[[<<"1499658701740485">>,
+  <<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleac91cc39'><active xmlns='http://jabber.org/protocol/chatstates'/><body>mencoba lagi</body></message>">>,
+  <<"alice@localhost">>,<<"chat">>,<<>>],
+ [<<"1499781005462797">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e32'><active xmlns='http://jabber.org/protocol/chatstates'/><body>yang lain</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>],
+ [<<"1499781228384097">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e38'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>]]
+<<"4">>
+#######################select#############################
+none
+[]
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,3,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"4">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+[[<<"1499658701740485">>,
+  <<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleac91cc39'><active xmlns='http://jabber.org/protocol/chatstates'/><body>mencoba lagi</body></message>">>,
+  <<"alice@localhost">>,<<"chat">>,<<>>],
+ [<<"1499781005462797">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e32'><active xmlns='http://jabber.org/protocol/chatstates'/><body>yang lain</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>],
+ [<<"1499781228384097">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e38'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>],
+ [<<"1499781234373211">>,
+  <<"<message from='bob@localhost/5280' to='alice@localhost/5280' type='chat' id='purplef094dba4'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi-lagi</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>]]
+<<"4">>
+#######################select#############################
+none
+[]
+{<<"alice">>,<<"localhost">>,<<>>}
+{rsm_in,4,undefined,undefined,undefined}
+chat
+#######################select#############################
+[[<<"SELECT ">>,[],
+  <<" timestamp, xml, peer, kind, nick FROM archive WHERE username='">>,
+  <<"bob">>,<<"'">>,
+  [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+  [],[],[]],
+ <<" ORDER BY timestamp ASC ">>,
+ [<<" limit ">>,<<"5">>],
+ <<";">>]
+[<<"SELECT COUNT(*) FROM archive WHERE username='">>,<<"bob">>,<<"'">>,
+ [<<" and bare_peer='">>,<<"alice@localhost">>,<<"'">>],
+ [],[],<<";">>]
+#######################select#############################
+[[<<"1499658701740485">>,
+  <<"<message from='bob@localhost/5280' to='alice@localhost' type='chat' id='purpleac91cc39'><active xmlns='http://jabber.org/protocol/chatstates'/><body>mencoba lagi</body></message>">>,
+  <<"alice@localhost">>,<<"chat">>,<<>>],
+ [<<"1499781005462797">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e32'><active xmlns='http://jabber.org/protocol/chatstates'/><body>yang lain</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>],
+ [<<"1499781228384097">>,
+  <<"<message from='alice@localhost/5280' to='bob@localhost' type='chat' id='purple111d9e38'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>],
+ [<<"1499781234373211">>,
+  <<"<message from='bob@localhost/5280' to='alice@localhost/5280' type='chat' id='purplef094dba4'><active xmlns='http://jabber.org/protocol/chatstates'/><body>lagi-lagi</body></message>">>,
+  <<"alice@localhost/5280">>,<<"chat">>,<<>>]]
+<<"4">>
+#######################select#############################

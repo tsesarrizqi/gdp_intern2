@@ -262,6 +262,11 @@ index_type: KEYS}];
 We can now query directly against the indexed column.
 GET Customer WHERE city = 'Boston';
 
+The more unique values that exist in a particular column, the more overhead you will have, on average, to query and maintain the index. For example, suppose you had a playlists table with a billion songs and wanted to look up songs by the artist. Many songs will share the same column value for artist. The artist column is a good candidate for an index.
+Jika kolom diindex, bisa digunakan untuk where clause pada query
+
+To perform a hot rebuild of an index, use the nodetool rebuild_index command
+
 Column-family databases with their ability to store any data structures are a great choice to store
 event information, such as application state or errors encountered by the application.
 
@@ -317,6 +322,16 @@ Cassandra tidak memiliki transaction, jika ingin pemrosesan data yg tidak terpot
 Dalam cassandra tiap node adalah peer, bukan master-slave.
 
 =================================
+##View in general
+In database theory, a view is the result set of a stored query on the data, which the database users can query just as they would in a persistent database collection object. 
+
+Wikipedia -> The process of setting up a materialized view is sometimes called materialization.[1] This is a form of caching the results of a query,
+Oracle -> When you need performance on data that don't need to be up to date to the very second, materialized views are better, but your data will be older than in a standard view. In view the data updated. Materialized view performance is better.
+HOWEVER -> materialized view in NoSQL will be automatically updated
+
+View -> always return the latest data, but performance may be slow depends on the query where the view is created
+Materialized view -> updated manually, but since it is physical it can use index to increase performance. because all the joins have been resolved at materialized view refresh time, you pay the price of the join once (or as often as you refresh your materialized view)
+
 Materialized View
 Although NoSQL databases don’t have views, they may have precomputed and cached queries, and
 they reuse the term “materialized view” to describe them. Central aspect. can use map-reduce computation.
@@ -326,6 +341,12 @@ This causes index performance to scale poorly with cluster size: as the cluster 
 There are two rough strategies to building a materialized view. The first is the eager approach
 where you update the materialized view at the same time you update the base data for it. If you don’t want to pay that overhead on each update, you can run batch jobs to update the
 materialized views at regular intervals.
+
+A view uses a query to pull data from the underlying tables.
+
+A materialized view is a table on disk that contains the result set of a query.
+
+Materialized views are primarily used to increase application performance when it isn't feasible or desirable to use a standard view with indexes applied to it. The downside is that you have to use triggers, or some other automatic method, to keep the materialized view up to date.
 =============== MV ===============
 Thus, for performance-critical queries the recommended approach has been to denormalize into another table, as Tyler outlined:
 
@@ -476,30 +497,19 @@ Another limitation is that we cannot create secondary indexes on the sub-columns
 
 =======================================================
 #########Starting cqerl
-1> ok = application:start(crypto).
-ok
-2> ok = application:start(asn1).      
-ok
-3> ok = application:start(public_key).
-ok
-4> ok = application:start(ssl).       
-ok
-5> ok = application:start(pooler).
-ok
-6> ok = application:start(re2).  
-ok
-7> ok = application:start(semver).
-ok
-8> ok = application:start(snappy).
-ok
-9> ok = application:start(lz4).  
-ok
-10> ok = application:start(quickrand).
-ok
-11> ok = application:start(uuid).     
-ok
-12> ok = application:start(cqerl).    
-ok
+application:start(asn1).
+application:start(crypto).
+application:start(public_key).
+application:start(ssl).
+application:start(pooler).
+application:start(re2).  
+application:start(semver).
+application:start(snappy).
+application:start(lz4).  
+application:start(quickrand).
+application:start(uuid).     
+application:start(cqerl).
+{ok, Cli} = cqerl:get_client("127.0.0.1:9042", [{keyspace, cycling}]).
 
 =========================================
 ##### Keys in Cassandra
@@ -619,6 +629,8 @@ NetworkTopology Strategi -> definisikan replica tiap data center. dalam tiap dat
 Data in Cassandra is often arranged as one query per table, and data is repeated amongst many tables, a process known as denormalization. Relational databases instead normalize data, removing as much duplication as possible.
 Client-side joins in application code is used only when table schema cannot capture the complexity of the relationships.
 
+##counter column -> the data is updated instead of inserted
+
 #Perlu analisis
 Partition & disk limitation can be needed
 Data redundancy & duplication
@@ -650,3 +662,214 @@ UPDATE users USING TTL <computed_ttl>
   SET todo['2012-10-1'] = 'find water' WHERE user_id = 'frodo';
 
 **A set, list, or map needs to have at least one element; otherwise, Apache Cassandra™ cannot distinguish the set from a null value.
+============================
+### What to learn
+1. latency leveling in Cassandra
+2. Cassandra vs MySQL writes & reads
+
+===============================================
+Let’s take a simple query and analyze it.
+
+On MySQL:
+
+UPDATE Customers SET ContactName = 'Alfred Schmidt' WHERE CustomerID = 1;
+
+When you run the above command on MySQL, it has to first look for CustomerID = 1, and then it has to lock the table and then write the record, and then unlock the table.
+
+It’s just a simple update command but for atomcity, MySQL has to do all that. Whereas Cassandra works differently!
+
+Cassandra:
+
+UPDATE Customers SET ContactName = 'Alfred Schmidt' WHERE CustomerID = 1;
+
+When you run a similar command on Cassandra CQL, (correct me if the syntax of the query is wrong).
+
+Cassandra won’t look for CustomerID = 1, it just goes to the write log and writes this query.
+
+So the writes are super fast on Cassandra because it is not searching for something and then writing it, it just writes in a write log and then the rest is taken care by some Cassandra algorithm to actually reflect the update on table!
+=================================================================================================
+Yes, Cassandra does implement latency leveling (for reads as well as writes, although it's slightly more complicated on reads).
+=================================================================================================
+
+At a single node level, MySQL (with the InnoDB storage engine) uses a traditional B+Tree. That means there may be multiple random disk seeks when performing a write. Cassandra uses log-structured merge trees for an on-disk format, meaning all writes are done sequentially (the database is the append-only log). That implies a lower write latency. 
+
+At the cluster level, Cassandra is also able to achieve greater write scalability by partitioning the key space such that each machine is only responsible for a portion of the keys. That implies a higher write throughput, as more writes can be done in parallel. To do so in MySQL requires partitioning (either through the MySQL NDB Cluster or at the application level). That, of course, implies your data volume is high enough to justify partitioning in the first place.
+
+Lastly (and most controversially, compared to other distributed systems) in Cassandra, any replica can initiate a write. In most MySQL deployments, writes are serialized through a single master. When the master fails (or is slow), there is a small window of unavailability until a new master takes over. That implies retrying the write until it succeeds, which in turns implies added latency.  With Cassandra, you simply move further down the preference list. 
+
+Note that relaxing the consistency requirement only decreases latency in failure or performance degradation (due to network, disk, GC, etc...) scenarios. Google's BigTable is an example of a strongly consistent system that can achieve fast writes in a normal scenario (due to partitioning and use of LSM trees); however "in a normal scenario" is not acceptable in certain use cases e.g., e-commerce (Dynamo - on which Cassandra is based - was originally devised to power Amazon's shopping cart), where a slow writes during peak load times (i.e., when failures are most likely to occur) imply a significant revenue loss (In my experience, eventually consistent systems are also easier to implement than "floating master" systems, but that's a personal opinion and a separate topic).
+
+It's also possible to also use latency leveling (write to N nodes, return as soon as response is received from M nodes) to take advantage of the relaxed consistency model to reduce latency in a normal scenario, but I am not sure if latency leveling  is implemented in Cassandra (I remember seeing JIRAs discussing it, but it could have been in another project).
+===========================================================================================================
+***** Di Cassandra write lebih cepat dari read
+a write operation is completed when the data has been both written in the commit log (file) and in memory (memtable)
+read -> bloom filter (cek memtable) -> if not exist looks sstable
+============================================================================================================
+##### Mod_mam_sql.erl
+- bare_peer adalah client yang terkait (sender/receiver) dengan client pemilik archive
+- timestamp adalah ID dari arsip
+
+====================================
+############ CQL ################
+SELECT -> Returns one or more rows from a single Cassandra table. Although a select statement without a where clause returns all rows from all partitions, it is not recommended.
+select with inequality -> select * from users where token(key) > token('3') limit 1;
+
+CQL collection columns and other columns support the use of user-defined types
+Partitioner mengurutkan dengan token
+Murmur3Partitioner, => random partitioner
+RandomPartitioner, => random partitioner
+ByteOrderedPartitioner, => ordered partitioner => dapat menggunakan token untuk mengambil range saat query
+
+CQL shell only supports read requests (SELECT statements) when the consistency level is set to SERIAL or LOCAL_SERIAL.
+Mat. VIew Req:
+-The columns of the source table's primary key must be part of the materialized view's primary key.
+-Only one new column can be added to the materialized view's primary key. Static columns are not allowed.
+
+Materialized views allow fast lookup of the data using the normal Cassandra read path. However, materialized views do not have the same write performance as normal table writes. Cassandra performs an additional read-before-write to update each materialized view.
+Cassandra can only write data directly to source tables, not to materialized views. 
+========================================
+mlns='urn:xmpp:mam:1'>
+    <x xmlns='jabber:x:data' type='submit'>
+      <field var='FORM_TYPE' type='hidden'>
+        <value>urn:xmpp:mam:1</value>
+      </field>
+      <field var='with'>
+        <value>alice@localhost</value>
+      </field>
+    </x>
+    <set xmlns='http://jabber.org/protocol/rsm'>
+      <max>2</max>
+    </set>
+  </query>
+</iq>
+
+{ok, Cli} = cqerl:get_client("127.0.0.1:9042", [{keyspace, cycling}]).
+{ok, _SchemaChange} = cqerl:run_query(Cli, "CREATE TABLE users(id int PRIMARY KEY, name varchar, password varchar, count int);").
+
+If all replica nodes are down, write succeeds after a hinted handoff. Provides low latency, guarantees writes never fail.
+
+SERIAL and LOCAL_SERIAL settings support read transactions.
+set consistency -> untuk umum = CONSISTENCY, untuk LWT -> serial
+
+execute file -> SOURCE 'file.cql'
+
+The user-defined column type (UDT) requires the frozen keyword. A frozen value serializes multiple components into a single value. Non-frozen types allow updates to individual fields. Cassandra treats the value of a frozen type as a blob. The entire value must be overwritten. 
+
+CQL3 doesnt support super-column family
+Whether you use the keyword TABLE or COLUMNFAMILY, both are the same (synonyms). I guess the keyword TABLE was introduced with CQL3.
+
+Use a composite partition key in your primary key to create a set of columns that you can use to distribute data across multiple partitions and to query and return sorted results. 
+
+Composite partition keys are used when the data stored is too large to reside in a single partition.
+
+Single partition batch operations are atomic automatically, while multiple partition batch operations require the use of a batchlog to ensure atomicity.
+
+In Cassandra, a write is atomic at the partition-level, meaning inserting or updating columns in a row is treated as one write operation. A delete operation is also performed atomically. By default, all operations in a batch are performed atomically.
+
+Single Partition Batch ==>> (diketahui partition key adalah cyclist_name)
+The first INSERT in the BATCH statement sets the balance to zero. The next two statements insert an expense_id and change the balance value. All the INSERT and UPDATE statements in this batch write to the same partition, keeping the latency of the write operation low.
+cqlsh> BEGIN BATCH
+  INSERT INTO cycling.cyclist_expenses (cyclist_name, balance) VALUES ('Vera ADRIAN', 0) IF NOT EXISTS;
+  INSERT INTO cycling.cyclist_expenses (cyclist_name, expense_id, amount, description, paid) VALUES ('Vera ADRIAN', 1, 7.95, 'Breakfast', false);
+  APPLY BATCH;
+Multi partition batch => (bad batch!!!!! diketahui partition key adlaah id)
+This example shows an anti-pattern since the BATCH statement will write to several different partitions, given the partition key id.
+cqlsh> BEGIN BATCH
+INSERT INTO cycling.cyclist_name (id, lastname, firstname) VALUES  (6d5f1663-89c0-45fc-8cfd-60a373b01622,'HOSKINS', 'Melissa');
+INSERT INTO cycling.cyclist_name (id, lastname, firstname) VALUES  (38ab64b6-26cc-4de9-ab28-c257cf011659,'FERNANDES', 'Marcia');
+INSERT INTO cycling.cyclist_name (id, lastname, firstname) VALUES  (9011d3be-d35c-4a8d-83f7-a3c543789ee7,'NIEWIADOMA', 'Katarzyna');
+INSERT INTO cycling.cyclist_name (id, lastname, firstname) VALUES  (95addc4c-459e-4ed7-b4b5-472f19a67995,'ADRIAN', 'Vera');
+APPLY BATCH;
+
+Note that Cassandra will reject this query if column_name is not a partition key or clustering column. 
+
+You can fine-tune the display order using the ORDER BY clause. The partition key must be defined in the WHERE clause and the ORDER BY clause defines the clustering column to use for ordering.
+
+There is a performance penalty for batch atomicity when a batch spans multiple partitions. If you do not want to incur this penalty, use the UNLOGGED option. Using UNLOGGED makes the batch operation atomic only within a single partition.
+
+. They are also known as compare and set transactions. You use lightweight transactions instead of durable transactions with eventual/tunable consistency for situations the require nodes in the distributed system to agree on changes to data. For example, two users attempting to create a unique user account in the same cluster could overwrite each other’s work. Using a lightweight transaction, the nodes can agree to create only one account.
+
+LWT -> IF EXISTS; -> cek seluruh node (if exist), supaya tidak overwrite satu sama lain -> sehingga tiap node agree to create one value
+
+The IN keyword can define a set of clustering columns to fetch together, supporting a "multi-get" of CQL rows.
+SELECT * FROM cycling.calendar WHERE race_id IN (100, 101, 102) AND (race_start_date, race_end_date) IN (('2015-05-09','2015-05-31'),('2015-05-06', '2015-05-31'));
+
+The first example would scan all rows of data in the cluster and could be a serious performance hit. If there are enough rows, the query could time out.
+
+The second will only scan a single partition of data which keeps the query to one server and is the recommended usage.
+
+Indexing Collection:
+-Set & list:
+CREATE INDEX team_idx ON cycling.cyclist_career_teams ( teams );
+SELECT * FROM cycling.cyclist_career_teams WHERE teams CONTAINS 'Nederland bloeit';
+-Map Keys
+CREATE INDEX team_year_idx ON cycling.cyclist_teams ( KEYS (teams) );
+SELECT * From cycling.cyclist_teams WHERE teams CONTAINS KEY 2015;
+-Map entries
+CREATE TABLE cycling.birthday_list (cyclist_name text PRIMARY KEY, blist map<text,text>);
+CREATE INDEX blist_idx ON cycling.birthday_list (ENTRIES(blist));
+SELECT * FROM cycling.birthday_list WHERE blist['age'] = '23';
+-Map values
+CREATE TABLE cycling.birthday_list (cyclist_name text PRIMARY KEY, blist
+      map<text,text>;
+);CREATE INDEX blist_idx ON cycling.birthday_list (VALUES(blist));
+SELECT * FROM cycling.birthday_list CONTAINS 'NETHERLANDS';
+-Frozen
+CREATE TABLE cycling.race_starts (cyclist_name text PRIMARY KEY, rnumbers FROZEN<LIST<int>>);
+CREATE INDEX rnumbers_idx ON cycling.race_starts (FULL(rnumbers));
+SELECT * FROM cycling.race_starts WHERE rnumbers = [39,7,14];
+
+****2 index****The indexes have been created on appropriate low cardinality columns, but the query still fails. Why? The answer lies with the partition key, which has not been defined. When you attempt a potentially expensive query, such as searching a range of rows, Cassandra requires the ALLOW FILTERING directive. The error is not due to multiple indexes, but the lack of a partition key definition in the query.
+cqlsh> SELECT * FROM cycling.cyclist_alt_stats WHERE birthday = '1990-05-27' AND nationality = 'Portugal' ALLOW FILTERING
+
+A logical query to try is a listing of the rankings for a particular year. Because the table has a composite partition key, this query will fail if only the first column is used in the conditional operator.
+
+Secondary indexes are tricky to use and can impact performance greatly. The index table is stored on each node in a cluster, so a query involving a secondary index can rapidly become a performance nightmare if multiple nodes are accessed. 
+
+bad index -> suppose you had a races table with a billion entries for cyclists in hundreds of races and wanted to look up rank by the cyclist. 
+good index -> Many cyclists' ranks will share the same column value for race year. The race_year column is a good candidate for an index.
+
+Note: There are limitations on altering the data type of a column. The two data types, the original and the one changing to, must be compatible.
+
+The difference between QUORUM and ALL is slight in this case, so depending on conditions in the cluster, performance using ALL might be faster than QUORUM.
+
+Under the following conditions, performance using ALL is worse than QUORUM:
+-The data consists of thousands of rows or more.
+-One node is slower than others. (bottleneck)
+-A particularly slow node was not selected to be part of the quorum.
+
+You can use probabilistic tracing on databases having at least ten rows -> SELECT * FROM system_traces.events;
+
+Use the TOKEN function to express a conditional relation on a partition key column. In this case, the query returns rows based on the token of the partition key rather than on the value.
+
+TTL -> UPDATE cycling.calendar USING TTL 300 SET race_name = 'dummy' WHERE race_id = 200 AND race_start_date = '2015-05-27' AND race_end_date = '2015-05-27';
+INSERT INTO cycling.calendar (race_id, race_name, race_start_date, race_end_date) VALUES (200, 'placeholder','2015-05-27', '2015-05-27') USING TTL 86400;
+
+A table contains a timestamp representing the date/time that a write occurred to a column.
+SELECT WRITETIME (firstname) FROM cycling.cyclist_points WHERE id=220844bf-4860-49d6-9a4b-6b5d3a79cbfb;
+########### PERLU DIPELAJARI ###############
+1. select from tanpa where -> done -> scan all rows -> modeling harus tepat =================================
+2. select count -> done -> scan all rows  ===================================================================
+3. how to use erlcass
+4. how to use map reducer
+5. mysql vs cassandra writes & reads
+6. LWT -> done -> use if clause to ensure direct consistency ================================================
+7. SQL view vs materialized view -> done -> contains result of query / precomputed query / cached query =====
+8. How index actually works (mungkin sorted sehingga bisa binary search)
+9. table caching property
+10. cassandra column timestamp (using timestamp)
+11. define TTL cassandra -> done -> ditulis di atas =========================================================
+12. how murmur, ordered, and random parititioner works
+13. cassandra eventual consistency (apakah manual atau otomatis)
+14. Cassandra ring structure
+15. cassandra read-repair
+16. kapan all better than quorum
+17. hashing
+18. cassandra KV or column-store
+
+################### START ERLCASS ##############
+application:start(syntax_tools).
+application:start(compiler).
+application:start(goldrush).
+application:start(lager).
+application:start(erlcass).
